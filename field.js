@@ -21,6 +21,11 @@ function Field(canvas, n = 4) {
     this.InitCells() // создаём клетки
     this.AddCell(1) // добавляем двойку
     this.AddCell(Math.random() < 0.75 ? 1 : 2) // добавляем 2 или 4
+
+    let field = this
+    document.addEventListener('keydown', function(e) {
+        field.KeyDown(e)
+    })
 }
 
 // инициализация ячеек
@@ -66,12 +71,11 @@ Field.prototype.DrawCell = function(i, j) {
 
     this.ctx.fillStyle = value < 3 ? this.fieldColor : "#fff"
     this.ctx.fillText(1 << value, x + this.cellSize / 2, y + this.cellSize / 2)
-    this.ctx.fillRect(x + this.cellSize / 2 - 2, y + this.cellSize / 2 - 2, 4, 4)
 }
 
 // отрисовка ячеек
 Field.prototype.DrawCells = function() {
-    this.ctx.font = this.cellSize / 1.8 +"px Arial"
+    this.ctx.font = this.cellSize / 2 +"px Arial"
     this.ctx.textAlign = "center"
     this.ctx.textBaseline = "middle"
 
@@ -90,4 +94,117 @@ Field.prototype.Draw = function() {
     this.ctx.fill()
 
     this.DrawCells()
+}
+
+// сдвиг значений в одну сторону
+Field.prototype.Shift = function(points) {
+    let j = 0;
+    let wasShift = true
+    let result = false
+
+    for (let i = 0; i < points.length; i++) {
+        if (this.cells[points[i].i][points[i].j] == 0)
+            continue // игнорируем пустые клетки
+
+        this.cells[points[j].i][points[j].j] = this.cells[points[i].i][points[i].j]
+
+        if (!wasShift && this.cells[points[j].i][points[j].j] == this.cells[points[j - 1].i][points[j - 1].j]) { // если можно схлопнуть
+            this.cells[points[j - 1].i][points[j - 1].j]++ // схлопываем
+            wasShift = true
+            result = true
+        }
+        else {
+            wasShift = false
+            result |= j != i
+            j++
+        }
+    }
+
+    for (let i = j; i < points.length; i++)
+        this.cells[points[i].i][points[i].j] = 0
+
+    return result
+}
+
+// сдвиг влево
+Field.prototype.ShiftLeft = function() {
+    let result = false
+
+    for (let i = 0; i < this.n; i++) {
+        let points = []
+
+        for (let j = 0; j < this.n; j++)
+            points.push({ i: i, j: j })
+
+        result |= this.Shift(points)
+    }
+
+    return result
+}
+
+// сдвиг вправо
+Field.prototype.ShiftRight = function() {
+    let result = false
+
+    for (let i = 0; i < this.n; i++) {
+        let points = []
+
+        for (let j = this.n - 1; j >= 0; j--)
+            points.push({ i: i, j: j })
+
+        result |= this.Shift(points)
+    }
+
+    return result
+}
+
+// сдвиг вверх
+Field.prototype.ShiftUp = function() {
+    let result = false
+
+    for (let j = 0; j < this.n; j++) {
+        let points = []
+
+        for (let i = 0; i < this.n; i++)
+            points.push({ i: i, j: j })
+
+        result |= this.Shift(points)
+    }
+
+    return result
+}
+
+// сдвиг вниз
+Field.prototype.ShiftDown = function() {
+    let result = false
+
+    for (let j = 0; j < this.n; j++) {
+        let points = []
+
+        for (let i = this.n - 1; i >= 0; i--)
+            points.push({ i: i, j: j })
+
+        result |= this.Shift(points)
+    }
+
+    return result
+}
+
+// обработка нажатия клавиши
+Field.prototype.KeyDown = function(e) {
+    let result = false
+
+    if (e.key == "ArrowLeft")
+        result = this.ShiftLeft()
+    else if (e.key == "ArrowRight")
+        result = this.ShiftRight()
+    else if (e.key == "ArrowUp")
+        result = this.ShiftUp()
+    else if (e.key == "ArrowDown")
+        result = this.ShiftDown()
+
+    if (result)
+        this.AddCell(1)
+
+    this.Draw()
 }
