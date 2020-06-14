@@ -75,7 +75,7 @@ Field.prototype.DrawCell = function(i, j) {
 
 // отрисовка ячеек
 Field.prototype.DrawCells = function() {
-    this.ctx.font = this.cellSize / 2 +"px Arial"
+    this.ctx.font = this.cellSize / 2.5 +"px Arial"
     this.ctx.textAlign = "center"
     this.ctx.textBaseline = "middle"
 
@@ -124,6 +124,47 @@ Field.prototype.Shift = function(points) {
         this.cells[points[i].i][points[i].j] = 0
 
     return result
+}
+
+// проверка возможности сдвига значений в одну сторону
+Field.prototype.CanShift = function(points) {
+    if (this.cells[points[0].i][points[0].j] == 0)
+        return true
+
+    for (let i = 1; i < points.length; i++) {
+        if (this.cells[points[i].i][points[i].j] == 0)
+            return false
+
+        if (this.cells[points[i].i][points[i].j] == this.cells[points[i - 1].i][points[i - 1].j])
+            return true
+    }
+
+    return false
+}
+
+// проверка возможности сдвинуть куда-либо
+Field.prototype.IsGameOver = function() {
+    for (let i = 0; i < this.n; i++) {
+        let left = []
+        let right = []
+        let up = []
+        let down = []
+
+        for (let j = 0; j < this.n; j++) {
+            left.push({ i: i, j: j })
+            right.push({ i: i, j: this.n - 1 - j })
+            up.push({ i: j, j: i })
+            down.push({ i: this.n - 1 - j, j: i })
+        }
+
+        if (this.CanShift(left) || this.CanShift(right))
+            return false
+
+        if (this.CanShift(up) || this.CanShift(down))
+            return false
+    }
+
+    return true
 }
 
 // сдвиг влево
@@ -202,9 +243,14 @@ Field.prototype.KeyDown = function(e) {
         result = this.ShiftUp()
     else if (e.key == "ArrowDown")
         result = this.ShiftDown()
+    else
+        return
 
     if (result)
-        this.AddCell(1)
+        this.AddCell(Math.random() < 0.9 ? 1 : 2)
 
     this.Draw()
+
+    if (this.IsGameOver())
+        alert("Game over")
 }
