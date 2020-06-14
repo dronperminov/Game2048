@@ -5,7 +5,7 @@ function Field(canvas, n = 4) {
 
     this.cellSize = 100 // размер клетки
     this.size = this.cellSize * this.n // размер поля
-    this.paddingTop = 10 // отсутп сверху
+    this.paddingTop = 50 // отсутп сверху
     this.paddingBottom = 10 // отступ снизу
     this.paddingHor = 10 // отсупы по бокам
     
@@ -21,6 +21,8 @@ function Field(canvas, n = 4) {
     this.InitCells() // создаём клетки
     this.AddCell(1) // добавляем двойку
     this.AddCell(Math.random() < 0.75 ? 1 : 2) // добавляем 2 или 4
+
+    this.score = 0 // очки
 
     let field = this
     document.addEventListener('keydown', function(e) {
@@ -76,8 +78,6 @@ Field.prototype.DrawCell = function(i, j) {
 // отрисовка ячеек
 Field.prototype.DrawCells = function() {
     this.ctx.font = this.cellSize / 2.5 +"px Arial"
-    this.ctx.textAlign = "center"
-    this.ctx.textBaseline = "middle"
 
     for (let i = 0; i < this.n; i++)
         for (let j = 0; j < this.n; j++)
@@ -86,12 +86,19 @@ Field.prototype.DrawCells = function() {
 
 // отрисовка поля
 Field.prototype.Draw = function() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
     this.ctx.beginPath()
     this.ctx.strokeStyle = "#000"
     this.ctx.fillStyle = this.fieldColor
     this.ctx.rect(this.paddingHor, this.paddingTop, this.size, this.size)
     this.ctx.stroke()
     this.ctx.fill()
+
+    this.ctx.textAlign = "center"
+    this.ctx.textBaseline = "middle"
+    this.ctx.font = this.cellSize / 3 + "px Arial"
+    this.ctx.fillText("Score: " + this.score, this.paddingHor + this.size / 2, this.paddingTop / 2 - this.paddingBottom / 2)
 
     this.DrawCells()
 }
@@ -110,6 +117,7 @@ Field.prototype.Shift = function(points) {
 
         if (!wasShift && this.cells[points[j].i][points[j].j] == this.cells[points[j - 1].i][points[j - 1].j]) { // если можно схлопнуть
             this.cells[points[j - 1].i][points[j - 1].j]++ // схлопываем
+            this.score += 1 << this.cells[points[j - 1].i][points[j - 1].j]
             wasShift = true
             result = true
         }
